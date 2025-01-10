@@ -8,15 +8,79 @@
     <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
     <title>index</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            text-align: center;
+        }
+        div {
+            height: 100px;
+            font-size: 24px;
+            line-height: 100px;
+        }
+        input {
+            width: 400px;
+            height: 40px;
+            padding: 0 10px;
+            font-size: 20px;
+            border-radius: 0;
+        }
+        input:focus {
+            border-radius: 0;
+        }
+    </style>
 </head>
 <body>
-    <div>Hello World</div>
-    <p>我是sh-liu</p>
-    <div>sourceTree</div>
-    <div>好难过</div>
-    <div>这不是我想要的结果</div>
-    <div>最后一次了</div>
-    <div>又来测试sourceTree了</div>
-    <div>终于好了</div>
+    <div></div>
+    <input type="text" value="Hello World" placeholder="请输入内容" oninput="data.value = this.value">
+    <script>
+        console.log('Hello World');
+
+        function observe(data) { 
+            if (!data || typeof data !== 'object') { 
+                return; 
+            } 
+            const dep = new Map()
+            return new Proxy(data, {
+                get(target, key) {
+                    console.log(dep)
+                    if (!dep.has(key)) {
+                        dep.set(key, new Set())
+                    }
+                    if (typeof window.__dependentFunction === 'function') {
+                        dep.get(key).add(window.__dependentFunction)
+                    }
+                    return Reflect.get(target, key);
+                },
+                set(target, key, value) {
+                    if (dep.has(key)) {
+                        dep.get(key).forEach(fn => fn(value))
+                    }
+                    return Reflect.set(target, key, value);
+                }
+            })
+        }
+        function runFunc(fn) {
+            window.__dependentFunction = fn;
+            return function(...args) {
+                window.__dependentFunction(...args);
+                window.__dependentFunction = null;
+            }
+        }
+
+        const div = document.querySelector('div');
+        const input = document.querySelector('input');
+        const data = observe({
+            value: input.value
+        });
+        const updateText = runFunc((value) => {
+            div.textContent = value;
+        })
+        updateText(data.value);
+        console.log(data)
+    </script>
 </body>
 </html>
